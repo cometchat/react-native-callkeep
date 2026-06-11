@@ -6,10 +6,4 @@
                      android:maxSdkVersion="29" />
     <uses-permission android:name="android.permission.READ_PHONE_NUMBERS" />
     <uses-permission android:name="android.permission.MANAGE_OWN_CALLS" />
-
-    <!-- Required (Android 11+) so resolveActivity can see the system telecom
-         package when opening the "Calling Accounts" settings screen. -->
-    <queries>
-        <package android:name="com.android.server.telecom" />
-    </queries>
 </manifest>
