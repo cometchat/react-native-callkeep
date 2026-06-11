@@ -21,6 +21,7 @@ import android.Manifest;
 import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
+import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -1008,20 +1009,35 @@ public class RNCallKeepModule extends ReactContextBaseJavaModule implements Life
             return;
         }
 
-        //if (Build.MANUFACTURER.equalsIgnoreCase("Samsung") || Build.MANUFACTURER.equalsIgnoreCase("OnePlus") || Build.MANUFACTURER.equalsIgnoreCase("Google")) {
-        Intent intent = new Intent();
-        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_MULTIPLE_TASK);
-        intent.setComponent(new ComponentName("com.android.server.telecom",
-                "com.android.server.telecom.settings.EnableAccountPreferenceActivity"));
-
-                Context context = this.getAppContext();
+        Context context = this.getAppContext();
         if (context == null) {
             Log.w(TAG, "[RNCallKeepModule][openPhoneAccounts] no react context found.");
-             return;
-         }
+            return;
+        }
 
-       context.startActivity(intent);
-       return;
+        // Prefer the public platform action. Only fall back to the private
+        // telecom component if the standard action is unavailable.
+        Intent actionIntent = new Intent(TelecomManager.ACTION_CHANGE_PHONE_ACCOUNTS);
+        actionIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_MULTIPLE_TASK);
+
+        try {
+            context.startActivity(actionIntent);
+            return;
+        } catch (ActivityNotFoundException e) {
+            Log.w(TAG, "[RNCallKeepModule][openPhoneAccounts] standard phone accounts settings unavailable, trying fallback", e);
+        }
+
+        // Fallback for some older devices or specific builds (OnePlus/Oppo/Samsung/etc.)
+        Intent fallbackIntent = new Intent();
+        fallbackIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_MULTIPLE_TASK);
+        fallbackIntent.setComponent(new ComponentName("com.android.server.telecom",
+                "com.android.server.telecom.settings.EnableAccountPreferenceActivity"));
+
+        try {
+            context.startActivity(fallbackIntent);
+        } catch (ActivityNotFoundException e) {
+            Log.w(TAG, "[RNCallKeepModule][openPhoneAccounts] unable to open phone accounts settings", e);
+        }
     }
 
     @ReactMethod
