@@ -458,7 +458,11 @@ public class VoiceConnectionService extends ConnectionService {
         VoiceConnection connection = new VoiceConnection(this, extrasMap);
         connection.setConnectionCapabilities(Connection.CAPABILITY_MUTE | Connection.CAPABILITY_SUPPORT_HOLD);
 
-        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        // Disabled: telecomManager.getPhoneAccount() requires the READ_PHONE_NUMBERS (or READ_PHONE_STATE)
+        // runtime permission on Android 11+ and throws SecurityException when it isn't granted. This block only
+        // marks the connection PROPERTY_SELF_MANAGED, which we never use (we register with CAPABILITY_CALL_PROVIDER).
+        // Re-enable (with a permission guard) if self-managed accounts are ever introduced.
+        if(false && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             Context context = getApplicationContext();
             TelecomManager telecomManager = (TelecomManager) context.getSystemService(context.TELECOM_SERVICE);
             PhoneAccount phoneAccount = telecomManager.getPhoneAccount(request.getAccountHandle());
